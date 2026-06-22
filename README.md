@@ -114,7 +114,7 @@ Developed through a collaborative human–AI workflow.
 
 ## 👨‍🔬 Author
 
-### Soren Vale
+### Draven Ashcroft
 
 *Educational Visualization & Concept Design*
 
