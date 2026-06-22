@@ -6,575 +6,351 @@
     <title>🧬 Codon Dialer + Genetic Code Lab</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #0a0a1a;
+            --bg-secondary: #1a1a3e;
+            --bg-tertiary: #0f0f2e;
+            --text-primary: #fff;
+            --text-secondary: #888;
+            --panel-bg: rgba(255,255,255,0.05);
+            --panel-border: rgba(255,255,255,0.1);
+            --input-bg: rgba(0,0,0,0.3);
+        }
+        body.light-mode {
+            --bg-primary: #f0f2f5;
+            --bg-secondary: #e4e6eb;
+            --bg-tertiary: #ffffff;
+            --text-primary: #1a1a2e;
+            --text-secondary: #666;
+            --panel-bg: rgba(255,255,255,0.7);
+            --panel-border: rgba(0,0,0,0.1);
+            --input-bg: rgba(255,255,255,0.8);
+        }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 50%, #0f0f2e 100%);
-            color: #fff;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--bg-tertiary) 100%);
+            color: var(--text-primary);
             min-height: 100vh;
             padding: 15px;
+            transition: background 0.5s, color 0.5s;
         }
-        .app-container { max-width: 1200px; margin: 0 auto; }
+        .app-container { max-width: 1200px; margin: 0 auto; position: relative; }
+        .particles-bg {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .particle {
+            position: absolute;
+            font-size: 14px;
+            opacity: 0.03;
+            animation: floatParticle 20s infinite linear;
+            color: var(--text-primary);
+        }
+        @keyframes floatParticle {
+            0%   { transform: translateY(100vh) rotate(0deg);   opacity: 0; }
+            10%  { opacity: 0.03; }
+            90%  { opacity: 0.03; }
+            100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+        }
 
         /* Header */
-        .app-header {
-            text-align: center;
-            margin-bottom: 15px;
+        .app-header { text-align: center; margin-bottom: 15px; position: relative; }
+        .theme-toggle {
+            position: absolute; right: 0; top: 0;
+            background: transparent; border: none;
+            width: 32px; height: 32px; font-size: 1em;
+            cursor: pointer; transition: all 0.3s;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0.6;
         }
+        .theme-toggle:hover { opacity: 1; transform: scale(1.1); }
         .app-header h1 {
             font-size: 2em;
             background: linear-gradient(90deg, #00d4ff, #7b2cbf);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        .app-header .subtitle { color: #888; font-size: 0.9em; }
+        .app-header .subtitle { color: var(--text-secondary); font-size: 0.9em; transition: color 0.5s; }
 
-        /* ===== TOP SECTION: Dialer + Side Result ===== */
+        /* Top Section */
         .top-section {
-            display: flex;
-            gap: 20px;
-            align-items: flex-start;
-            justify-content: center;
-            flex-wrap: wrap;
+            display: flex; gap: 20px; align-items: flex-start;
+            justify-content: center; flex-wrap: wrap;
             margin-bottom: 20px;
         }
 
         /* Dialer */
-        .dial-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+        .dial-wrapper { display: flex; flex-direction: column; align-items: center; }
+
         .dial-container {
-            position: relative;
-            width: 380px;
-            height: 380px;
+            position: relative; width: 380px; height: 380px;
             margin: 10px auto;
+            /* Removed 3D perspective tilt: the reading-pointer is positioned outside
+               this element and does not participate in its 3D transform, so hovering
+               caused the pointer to visually drift off the ring edge. */
         }
-        .reading-window {
-            position: absolute;
-            top: -8px;
-            left: 50%;
+        .reading-pointer {
+            position: absolute; top: -28px; left: 50%;
             transform: translateX(-50%);
-            width: 50px;
-            height: 34px;
-            background: linear-gradient(180deg, #ffd700, #ff8c00);
-            border-radius: 8px 8px 0 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #000;
-            z-index: 100;
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+            z-index: 100; pointer-events: none;
         }
-        .reading-window::after {
-            content: '▼';
-            position: absolute;
-            bottom: -20px;
-            font-size: 1em;
-            color: #ffd700;
+        .reading-pointer svg {
+            width: 16px; height: 22px;
+            filter: drop-shadow(0 0 5px rgba(255,215,0,0.7));
         }
-        .selection-line {
-            position: absolute;
-            top: 26px;
-            left: 50%;
-            height: 170px;
-            border-left: 2px dashed rgba(255, 215, 0, 0.4);
-            transform: translateX(-50%);
-            z-index: 50;
-            pointer-events: none;
-        }
+        .reading-pointer path { fill: #ffd700; transition: fill 0.3s; }
         .ring {
-            position: absolute;
-            border-radius: 50%;
-            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: absolute; border-radius: 50%;
+            transition: transform 0.5s cubic-bezier(0.4,0,0.2,1);
             cursor: pointer;
         }
-        .ring-1 { width: 110px; height: 110px; top: 135px; left: 135px; z-index: 3; }
-        .ring-2 { width: 210px; height: 210px; top: 85px; left: 85px; z-index: 2; }
-        .ring-3 { width: 340px; height: 340px; top: 20px; left: 20px; z-index: 1; }
-        .segment { cursor: pointer; transition: opacity 0.3s, filter 0.2s; }
-        .segment:hover { opacity: 0.85; }
+        .ring-1 { width: 100px;  height: 100px;  top: 140px; left: 140px; z-index: 3; }
+        .ring-2 { width: 220px;  height: 220px;  top: 80px;  left: 80px;  z-index: 2; }
+        .ring-3 { width: 350px;  height: 350px;  top: 15px;  left: 15px;  z-index: 1; }
+
+        .segment { cursor: pointer; transition: opacity 0.4s ease, filter 0.4s ease, stroke-width 0.3s; }
+        .segment:hover { opacity: 0.9; }
         .segment-selected {
-            stroke: #ffd700 !important;
-            stroke-width: 3px !important;
-            filter: brightness(1.3) drop-shadow(0 0 6px rgba(255, 215, 0, 0.85));
+            stroke: #ffd700 !important; stroke-width: 3px !important;
+            filter: brightness(1.4) drop-shadow(0 0 10px rgba(255,215,0,0.9));
+            opacity: 1 !important;
+            animation: selectPulse 0.6s ease-out;
         }
-        .segment-text { font-size: 13px; font-weight: bold; pointer-events: none; }
+        @keyframes selectPulse {
+            0%   { filter: brightness(1.4) drop-shadow(0 0 20px rgba(255,215,0,1)); }
+            50%  { filter: brightness(1.6) drop-shadow(0 0 30px rgba(255,215,0,0.8)); }
+            100% { filter: brightness(1.4) drop-shadow(0 0 10px rgba(255,215,0,0.9)); }
+        }
+        .ring.faded .segment:not(.segment-selected) {
+            opacity: 0.35; filter: grayscale(0.3) brightness(0.6);
+        }
+        .ring.faded .segment-text { opacity: 0.4; }
+        .ring.faded .segment-selected .segment-text { opacity: 1; }
+        .segment-text {
+            font-size: 13px; font-weight: bold; pointer-events: none;
+            transition: transform 0.5s cubic-bezier(0.4,0,0.2,1);
+            transform-box: fill-box; transform-origin: center;
+        }
 
         /* Compact Controls */
-        .compact-controls {
-            display: flex;
-            gap: 25px;
-            justify-content: center;
-            margin-top: 8px;
-        }
-        .ring-control-mini {
-            text-align: center;
-        }
-        .ring-control-mini h4 {
-            color: #00d4ff;
-            font-size: 0.75em;
-            margin-bottom: 4px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+        .compact-controls { display: flex; gap: 25px; justify-content: center; margin-top: 8px; }
+        .ring-control-mini.active-1 .btn-mini { box-shadow: 0 0 15px rgba(78,205,196,0.6); }
+        .ring-control-mini.active-2 .btn-mini { box-shadow: 0 0 15px rgba(255,107,107,0.6); }
+        .ring-control-mini.active-3 .btn-mini { box-shadow: 0 0 15px rgba(255,230,109,0.6); }
+        .ring-control-mini.active-4 .btn-mini { box-shadow: 0 0 15px rgba(149,225,211,0.6); }
+        .ring-control-mini { text-align: center; }
+        .ring-control-mini h4 { color: #00d4ff; font-size: 0.75em; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; }
         .btn-mini {
             background: linear-gradient(135deg, #00d4ff, #7b2cbf);
-            border: none;
-            color: white;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            font-size: 0.9em;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
+            border: none; color: white;
+            width: 32px; height: 32px; border-radius: 50%;
+            font-size: 0.9em; cursor: pointer; transition: all 0.2s;
+            display: inline-flex; align-items: center; justify-content: center;
         }
-        .btn-mini:hover { transform: scale(1.1); box-shadow: 0 0 12px rgba(0, 212, 255, 0.4); }
-        .pos-mini {
-            font-size: 1.3em;
-            font-weight: bold;
-            color: #ffd700;
-            margin-top: 3px;
-        }
+        .btn-mini:hover { transform: scale(1.1); box-shadow: 0 0 12px rgba(0,212,255,0.4); }
+        .pos-mini { font-size: 1.3em; font-weight: bold; color: #ffd700; margin-top: 3px; }
 
         /* Quick Jump Buttons */
-        .quick-jumps {
-            display: flex;
-            gap: 8px;
-            margin-top: 10px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        .btn-jump {
-            border: none;
-            border-radius: 15px;
-            padding: 6px 14px;
-            font-size: 0.75em;
-            font-weight: bold;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
+        .quick-jumps { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; justify-content: center; }
+        .btn-jump { border: none; border-radius: 15px; padding: 6px 14px; font-size: 0.75em; font-weight: bold; cursor: pointer; transition: transform 0.2s; }
         .btn-jump:hover { transform: scale(1.05); }
-        .btn-start { background: #2ed573; color: #000; }
-        .btn-stop { background: #ff4757; color: #fff; }
+        .btn-start  { background: #2ed573; color: #000; }
+        .btn-stop   { background: #ff4757; color: #fff; }
         .btn-random { background: linear-gradient(135deg, #7b2cbf, #00d4ff); color: #fff; }
 
         /* Side Result Card */
         .side-result {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 20px;
-            padding: 25px 30px;
-            min-width: 280px;
-            max-width: 320px;
-            backdrop-filter: blur(10px);
-            align-self: center;
+            background: var(--panel-bg); border: 1px solid var(--panel-border);
+            border-radius: 20px; padding: 25px 30px;
+            min-width: 280px; max-width: 320px;
+            backdrop-filter: blur(10px); align-self: center;
+            transition: background 0.5s, border-color 0.5s, transform 0.4s, opacity 0.4s;
         }
-        .side-result h3 {
-            color: #00d4ff;
-            font-size: 0.9em;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 15px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            padding-bottom: 10px;
-        }
-        .codon-display-mini {
-            font-size: 2.2em;
-            font-weight: bold;
-            letter-spacing: 8px;
-            margin: 15px 0;
-            text-align: center;
-        }
-        .codon-display-mini span {
-            display: inline-block;
-            padding: 8px 16px;
-            border-radius: 8px;
-            margin: 0 3px;
-        }
+        .side-result.updating { transform: translateX(20px) scale(0.95); opacity: 0.7; }
+        .side-result h3 { color: #00d4ff; font-size: 0.9em; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+        .codon-display-mini { font-size: 2.2em; font-weight: bold; letter-spacing: 8px; margin: 15px 0; text-align: center; }
+        .codon-display-mini span { display: inline-block; padding: 8px 16px; border-radius: 8px; margin: 0 3px; }
         .base-1 { background: #4ecdc4; color: #000; }
         .base-2 { background: #ff6b6b; color: #000; }
         .base-3 { background: #ffe66d; color: #000; }
-        .aa-result-mini {
-            font-size: 2.5em;
-            font-weight: bold;
-            text-align: center;
-            padding: 12px 20px;
-            border-radius: 12px;
-            margin: 10px 0;
-        }
-        .aa-name-mini {
-            text-align: center;
-            color: #aaa;
-            font-size: 0.95em;
-            margin-bottom: 8px;
-        }
-        .special-tag-mini {
-            display: block;
-            text-align: center;
-            padding: 6px 14px;
-            border-radius: 15px;
-            font-size: 0.75em;
-            font-weight: bold;
-            margin-top: 8px;
-        }
-        .degeneracy-mini {
-            margin-top: 12px;
-            padding: 10px;
-            background: rgba(0,0,0,0.3);
-            border-radius: 10px;
-            font-size: 0.82em;
-            color: #aaa;
-            line-height: 1.5;
-        }
+        .aa-result-mini { font-size: 2.5em; font-weight: bold; text-align: center; padding: 12px 20px; border-radius: 12px; margin: 10px 0; }
+        .aa-name-mini { text-align: center; color: var(--text-secondary); font-size: 0.95em; margin-bottom: 8px; transition: color 0.5s; }
+        .special-tag-mini { display: block; text-align: center; padding: 6px 14px; border-radius: 15px; font-size: 0.75em; font-weight: bold; margin-top: 8px; }
+        .degeneracy-mini { margin-top: 12px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 10px; font-size: 0.82em; color: var(--text-secondary); line-height: 1.5; transition: color 0.5s; }
         .degeneracy-mini strong { color: #00d4ff; }
+        body.light-mode .degeneracy-mini { background: rgba(0,0,0,0.08); color: #555; }
 
-        /* ===== STATS BAR ===== */
-        .stats-bar {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
-        .stat-card {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px;
-            padding: 12px 20px;
-            text-align: center;
-            backdrop-filter: blur(10px);
-            transition: transform 0.3s;
-            min-width: 100px;
-        }
+        /* Stats Bar */
+        .stats-bar { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+        .stat-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px 20px; text-align: center; backdrop-filter: blur(10px); transition: transform 0.3s; min-width: 100px; }
         .stat-card:hover { transform: translateY(-3px); border-color: rgba(0,212,255,0.3); }
         .stat-number { font-size: 1.6em; font-weight: bold; color: #00d4ff; }
-        .stat-label { font-size: 0.75em; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+        .stat-label { font-size: 0.75em; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; transition: color 0.5s; }
 
-        /* ===== PANELS GRID ===== */
-        .panels-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        .panel {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 16px;
-            padding: 20px;
-            backdrop-filter: blur(10px);
-        }
-        .panel h2 {
-            color: #00d4ff;
-            margin-bottom: 12px;
-            font-size: 1.1em;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .panel p.hint { color: #888; margin-bottom: 10px; font-size: 0.85em; }
+        /* Panels Grid */
+        .panels-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); gap: 15px; margin-bottom: 20px; }
+        .panel { background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 16px; padding: 20px; backdrop-filter: blur(10px); transition: background 0.5s, border-color 0.5s; }
+        .panel h2 { color: #00d4ff; margin-bottom: 12px; font-size: 1.1em; display: flex; align-items: center; gap: 8px; }
+        .panel p.hint { color: var(--text-secondary); margin-bottom: 10px; font-size: 0.85em; transition: color 0.5s; }
 
         input[type="text"] {
-            width: 100%;
-            padding: 10px 14px;
-            border: 2px solid rgba(255,255,255,0.15);
-            border-radius: 10px;
-            background: rgba(0,0,0,0.3);
-            color: #fff;
-            font-size: 0.95em;
-            margin-bottom: 10px;
-            text-transform: uppercase;
+            width: 100%; padding: 10px 14px;
+            border: 2px solid var(--panel-border); border-radius: 10px;
+            background: var(--input-bg); color: var(--text-primary);
+            font-size: 0.95em; margin-bottom: 10px; text-transform: uppercase;
+            transition: background 0.5s, color 0.5s, border-color 0.5s;
         }
         input[type="text"]:focus { outline: none; border-color: #00d4ff; }
 
         .btn-action {
             background: linear-gradient(135deg, #00d4ff, #7b2cbf);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 0.9em;
-            font-weight: bold;
-            transition: all 0.3s;
-            width: 100%;
+            color: white; border: none; padding: 10px 20px;
+            border-radius: 10px; cursor: pointer; font-size: 0.9em; font-weight: bold;
+            transition: all 0.3s; width: 100%;
         }
         .btn-action:hover { transform: scale(1.02); box-shadow: 0 5px 15px rgba(0,212,255,0.3); }
 
-        .result-box {
-            margin-top: 12px;
-            padding: 12px;
-            border-radius: 10px;
-            background: rgba(0,0,0,0.3);
-            min-height: 50px;
-            font-size: 0.95em;
-        }
-        .aa-badge {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 6px;
-            margin: 2px;
-            font-weight: bold;
-            font-size: 0.9em;
-        }
-        .stop-badge { background: #ff4757; color: white; }
+        .result-box { margin-top: 12px; padding: 12px; border-radius: 10px; background: rgba(0,0,0,0.3); min-height: 50px; font-size: 0.95em; }
+        .aa-badge { display: inline-block; padding: 4px 10px; border-radius: 6px; margin: 2px; font-weight: bold; font-size: 0.9em; }
+        .stop-badge  { background: #ff4757; color: white; }
         .start-badge { background: #2ed573; color: white; }
         .normal-badge { background: #5352ed; color: white; }
 
         /* Codon Table */
-        .codon-table {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 4px;
-            margin-top: 12px;
-            max-height: 280px;
-            overflow-y: auto;
-        }
-        .codon-cell {
-            padding: 6px 4px;
-            text-align: center;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 0.75em;
-            border: 1px solid transparent;
-        }
+        .codon-table { display: grid; grid-template-columns: repeat(4,1fr); gap: 4px; margin-top: 12px; max-height: 280px; overflow-y: auto; }
+        .codon-cell { padding: 6px 4px; text-align: center; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-size: 0.75em; border: 1px solid transparent; background: linear-gradient(135deg, var(--cell-color, rgba(128,128,128,0.08)) 0%, rgba(128,128,128,0.03) 100%); }
         .codon-cell:hover { transform: scale(1.15); z-index: 10; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        .codon-cell.active {
-            border-color: #ffd700;
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
-            transform: scale(1.1);
-        }
+        .codon-cell.active { border-color: #ffd700; box-shadow: 0 0 15px rgba(255,215,0,0.5); transform: scale(1.1); }
 
         /* Mutation */
-        .mutation-row {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-            flex-wrap: wrap;
-        }
-        .mut-box {
-            flex: 1;
-            min-width: 140px;
-            padding: 12px;
-            border-radius: 8px;
-            background: rgba(0,0,0,0.2);
-        }
-        .mut-box h5 { color: #ffd700; margin-bottom: 8px; font-size: 0.85em; }
-
-        .mut-source-box {
-            background: rgba(0,212,255,0.08);
-            border: 1px solid rgba(0,212,255,0.2);
-            border-radius: 10px;
-            padding: 12px;
-            margin-bottom: 10px;
-        }
+        .mut-source-box { background: rgba(0,212,255,0.08); border: 1px solid rgba(0,212,255,0.2); border-radius: 10px; padding: 12px; margin-bottom: 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .mut-source-box h5 { color: #00d4ff; margin-bottom: 6px; font-size: 0.8em; text-transform: uppercase; letter-spacing: 1px; }
         .mut-source-box .seq-row { font-family: monospace; font-size: 0.95em; margin-bottom: 4px; }
-        .mut-source-box .prot-row { font-size: 0.85em; color: #aaa; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.1); }
+        .mut-source-box .prot-row { font-size: 0.85em; color: var(--text-secondary); margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--panel-border); transition: color 0.5s, border-color 0.5s; }
 
-        .mut-interactive-box {
-            background: rgba(255,215,0,0.05);
-            border: 1px solid rgba(255,215,0,0.2);
-            border-radius: 10px;
-            padding: 12px;
-            margin-bottom: 10px;
-        }
+        .mut-interactive-box { background: rgba(255,215,0,0.05); border: 1px solid rgba(255,215,0,0.2); border-radius: 10px; padding: 12px; margin-bottom: 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .mut-interactive-box h5 { color: #ffd700; margin-bottom: 6px; font-size: 0.8em; text-transform: uppercase; letter-spacing: 1px; }
-        .mut-interactive-box .instruction { color: #888; font-size: 0.8em; margin-bottom: 8px; }
+        .mut-interactive-box .instruction { color: var(--text-secondary); font-size: 0.8em; margin-bottom: 8px; transition: color 0.5s; }
 
-        .base-clickable {
-            display: inline-block;
-            padding: 4px 7px;
-            margin: 2px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: monospace;
-            font-size: 1em;
-            border: 2px solid transparent;
-        }
-        .base-clickable:hover {
-            transform: scale(1.2);
-            border-color: #ffd700;
-            box-shadow: 0 0 10px rgba(255,215,0,0.3);
-        }
-        .base-clickable.selected-for-mut {
-            border-color: #ff4757;
-            box-shadow: 0 0 12px rgba(255,71,87,0.4);
-            animation: pulse 1s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.15); }
-        }
+        .base-clickable { display: inline-block; padding: 4px 7px; margin: 2px; border-radius: 5px; cursor: pointer; transition: all 0.2s; font-family: monospace; font-size: 1em; border: 2px solid transparent; }
+        @media (max-width: 768px) { .base-clickable { padding: 3px 5px; font-size: 0.85em; margin: 1px; } }
+        .base-clickable:hover { transform: scale(1.2); border-color: #ffd700; box-shadow: 0 0 10px rgba(255,215,0,0.3); }
+        .base-clickable.selected-for-mut { border-color: #ff4757; box-shadow: 0 0 12px rgba(255,71,87,0.4); animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
 
-        .mut-controls {
-            display: flex;
-            gap: 8px;
-            margin-top: 10px;
-            flex-wrap: wrap;
-        }
-        .mut-controls button {
-            flex: 1;
-            min-width: 120px;
-            padding: 8px 14px;
-            font-size: 0.85em;
-        }
+        .mut-controls { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+        .mut-controls button { flex: 1; min-width: 120px; padding: 8px 14px; font-size: 0.85em; }
 
-        .mut-compare-box {
-            background: rgba(0,0,0,0.25);
-            border-radius: 10px;
-            padding: 12px;
-            margin-top: 10px;
-        }
+        .mut-compare-box { background: rgba(0,0,0,0.25); border-radius: 10px; padding: 12px; margin-top: 10px; animation: unzipIn 0.6s ease-out; }
+        @keyframes unzipIn { 0% { transform: scaleY(0); opacity: 0; } 50% { transform: scaleY(1.05); opacity: 0.8; } 100% { transform: scaleY(1); opacity: 1; } }
         .mut-compare-box h5 { color: #7b2cbf; margin-bottom: 8px; font-size: 0.8em; }
 
-        .no-data-msg {
-            color: #666;
-            text-align: center;
-            padding: 15px;
-            font-style: italic;
-        }
+        .no-data-msg { color: var(--text-secondary); text-align: center; padding: 15px; font-style: italic; transition: color 0.5s; }
         .base { display: inline-block; padding: 2px 5px; margin: 1px; border-radius: 3px; font-size: 0.9em; }
-        .base-A { background: #ff6b6b; }
+        .base-A { background: #ffe66d; color: #000; }
         .base-U { background: #4ecdc4; }
         .base-G { background: #95e1d3; color: #000; }
         .base-C { background: #ff6b6b; }
         .mutated { background: #ffd700 !important; color: #000; font-weight: bold; }
 
-        /* Features */
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 12px;
-            margin-top: 15px;
-        }
-        .feature-card {
-            background: rgba(255,255,255,0.03);
-            border-left: 3px solid #00d4ff;
-            padding: 12px 15px;
-            border-radius: 0 10px 10px 0;
-        }
-        .feature-card h4 { color: #00d4ff; margin-bottom: 4px; font-size: 0.9em; }
-        .feature-card p { color: #aaa; font-size: 0.82em; line-height: 1.4; }
-
         /* Legend */
-        .legend {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 15px;
-            flex-wrap: wrap;
-        }
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.8em;
-            color: #888;
-        }
-        .legend-color {
-            width: 14px;
-            height: 14px;
-            border-radius: 4px;
-        }
+        .legend { display: flex; justify-content: center; gap: 15px; margin-top: 15px; flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.8em; color: var(--text-secondary); transition: color 0.5s; }
+        .legend-color { width: 14px; height: 14px; border-radius: 4px; }
 
         /* Responsive */
         @media (max-width: 768px) {
             .top-section { flex-direction: column; align-items: center; }
             .side-result { max-width: 100%; width: 100%; }
             .dial-container { width: 300px; height: 300px; }
-            .ring-1 { width: 85px; height: 85px; top: 107px; left: 107px; }
-            .ring-2 { width: 165px; height: 165px; top: 67px; left: 67px; }
-            .ring-3 { width: 270px; height: 270px; top: 15px; left: 15px; }
-            .selection-line { height: 130px; }
+            .ring-1 { width: 78px;  height: 78px;  top: 111px; left: 111px; }
+            .ring-2 { width: 172px; height: 172px; top: 64px;  left: 64px;  }
+            .ring-3 { width: 275px; height: 275px; top: 12px;  left: 12px;  }
+            .reading-pointer { top: -22px; }
+            .reading-pointer svg { width: 18px; height: 22px; }
             .panels-grid { grid-template-columns: 1fr; }
+            .theme-toggle { width: 28px; height: 28px; font-size: 0.85em; }
+            .app-header h1 { font-size: 1.5em; padding-right: 60px; }
         }
     </style>
 </head>
 <body>
+    <div class="particles-bg" id="particlesBg"></div>
     <div class="app-container">
-        <!-- Header -->
+
         <div class="app-header">
             <h1>🧬 3-RING CODON DIALER + GENETIC CODE LAB</h1>
-            <p class="subtitle">Rotate rings to explore codons • Use panels to decode, translate & mutate</p>
+            <p class="subtitle">Rotate rings to explore codons • Use panels to decode, translate &amp; mutate</p>
+            <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode">🌓</button>
         </div>
 
-        <!-- ===== TOP: Dialer + Side Result ===== -->
+
         <div class="top-section">
-            <!-- Dialer -->
             <div class="dial-wrapper">
                 <div class="dial-container">
-                    <div class="reading-window">▼</div>
-                    <div class="selection-line"></div>
+                    <div class="reading-pointer">
+                        <svg viewBox="0 0 16 22" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8,20 C8,20 2,12 2,7 A6,6 0 0,1 14,7 C14,12 8,20 8,20 Z" />
+                        </svg>
+                    </div>
 
-                    <!-- Ring 1 -->
-                    <svg class="ring ring-1" id="ring1" viewBox="0 0 110 110">
-                        <g transform="translate(55,55)">
-                            <path d="M 0,0 L -38.9,-38.9 A 55,55 0 0,1 38.9,-38.9 Z" fill="#4ecdc4" stroke="#fff" stroke-width="2" class="segment" data-index="0" onclick="jumpToBase(1, 0)"/>
-                            <path d="M 0,0 L 38.9,-38.9 A 55,55 0 0,1 38.9,38.9 Z" fill="#ff6b6b" stroke="#fff" stroke-width="2" class="segment" data-index="1" onclick="jumpToBase(1, 1)"/>
-                            <path d="M 0,0 L 38.9,38.9 A 55,55 0 0,1 -38.9,38.9 Z" fill="#ffe66d" stroke="#fff" stroke-width="2" class="segment" data-index="2" onclick="jumpToBase(1, 2)"/>
-                            <path d="M 0,0 L -38.9,38.9 A 55,55 0 0,1 -38.9,-38.9 Z" fill="#95e1d3" stroke="#fff" stroke-width="2" class="segment" data-index="3" onclick="jumpToBase(1, 3)"/>
-                            <text x="0" y="-26" text-anchor="middle" class="segment-text" fill="#000">U</text>
-                            <text x="26" y="3" text-anchor="middle" class="segment-text" fill="#000">C</text>
-                            <text x="0" y="32" text-anchor="middle" class="segment-text" fill="#000">A</text>
-                            <text x="-26" y="3" text-anchor="middle" class="segment-text" fill="#000">G</text>
-                            <circle cx="0" cy="0" r="16" fill="#0a0a1a" stroke="#00d4ff" stroke-width="2"/>
-                            <text x="0" y="3" text-anchor="middle" fill="#00d4ff" font-size="8" font-weight="bold">1st</text>
+                    <!-- Ring 1 (innermost – 1st base) -->
+                    <svg class="ring ring-1" id="ring1" viewBox="0 0 100 100">
+                        <g transform="translate(50,50)">
+                            <path d="M 0,0 L -35.4,-35.4 A 50,50 0 0,1 35.4,-35.4 Z" fill="#4ecdc4" stroke="#fff" stroke-width="2" class="segment" data-index="0" onclick="jumpToBase(1,0)"/>
+                            <path d="M 0,0 L 35.4,-35.4 A 50,50 0 0,1 35.4,35.4 Z"  fill="#ff6b6b" stroke="#fff" stroke-width="2" class="segment" data-index="1" onclick="jumpToBase(1,1)"/>
+                            <path d="M 0,0 L 35.4,35.4 A 50,50 0 0,1 -35.4,35.4 Z"  fill="#ffe66d" stroke="#fff" stroke-width="2" class="segment" data-index="2" onclick="jumpToBase(1,2)"/>
+                            <path d="M 0,0 L -35.4,35.4 A 50,50 0 0,1 -35.4,-35.4 Z" fill="#95e1d3" stroke="#fff" stroke-width="2" class="segment" data-index="3" onclick="jumpToBase(1,3)"/>
+                            <text x="0"   y="-24" text-anchor="middle" class="segment-text" fill="#000">U</text>
+                            <text x="24"  y="3"   text-anchor="middle" class="segment-text" fill="#000">C</text>
+                            <text x="0"   y="29"  text-anchor="middle" class="segment-text" fill="#000">A</text>
+                            <text x="-24" y="3"   text-anchor="middle" class="segment-text" fill="#000">G</text>
                         </g>
                     </svg>
 
-                    <!-- Ring 2 -->
-                    <svg class="ring ring-2" id="ring2" viewBox="0 0 210 210">
-                        <g transform="translate(105,105)">
+                    <!-- Ring 2 (2nd base) -->
+                    <svg class="ring ring-2" id="ring2" viewBox="0 0 220 220">
+                        <g transform="translate(110,110)">
                             <g id="ring2-segments"></g>
-                            <circle cx="0" cy="0" r="28" fill="#0a0a1a" stroke="#00d4ff" stroke-width="2"/>
-                            <text x="0" y="3" text-anchor="middle" fill="#00d4ff" font-size="10" font-weight="bold">2nd</text>
                         </g>
                     </svg>
 
-                    <!-- Ring 3 -->
-                    <svg class="ring ring-3" id="ring3" viewBox="0 0 340 340">
-                        <g transform="translate(170,170)">
+                    <!-- Ring 3 (outermost – 3rd base) -->
+                    <svg class="ring ring-3" id="ring3" viewBox="0 0 350 350">
+                        <g transform="translate(175,175)">
                             <g id="ring3-segments"></g>
-                            <circle cx="0" cy="0" r="45" fill="#0a0a1a" stroke="#00d4ff" stroke-width="2"/>
-                            <text x="0" y="3" text-anchor="middle" fill="#00d4ff" font-size="11" font-weight="bold">3rd</text>
                         </g>
                     </svg>
                 </div>
 
-                <!-- Compact Controls -->
                 <div class="compact-controls">
                     <div class="ring-control-mini">
                         <h4>1st Base</h4>
-                        <button class="btn-mini" onclick="rotateRing(1, -1)">▲</button>
-                        <button class="btn-mini" onclick="rotateRing(1, 1)">▼</button>
+                        <button class="btn-mini" onclick="rotateRing(1,-1)">▲</button>
+                        <button class="btn-mini" onclick="rotateRing(1,1)">▼</button>
                         <div class="pos-mini" id="pos1">U</div>
                     </div>
                     <div class="ring-control-mini">
                         <h4>2nd Base</h4>
-                        <button class="btn-mini" onclick="rotateRing(2, -1)">▲</button>
-                        <button class="btn-mini" onclick="rotateRing(2, 1)">▼</button>
+                        <button class="btn-mini" onclick="rotateRing(2,-1)">▲</button>
+                        <button class="btn-mini" onclick="rotateRing(2,1)">▼</button>
                         <div class="pos-mini" id="pos2">U</div>
                     </div>
                     <div class="ring-control-mini">
                         <h4>3rd Base</h4>
-                        <button class="btn-mini" onclick="rotateRing(3, -1)">▲</button>
-                        <button class="btn-mini" onclick="rotateRing(3, 1)">▼</button>
+                        <button class="btn-mini" onclick="rotateRing(3,-1)">▲</button>
+                        <button class="btn-mini" onclick="rotateRing(3,1)">▼</button>
                         <div class="pos-mini" id="pos3">U</div>
                     </div>
                 </div>
 
                 <div class="quick-jumps">
-                    <button class="btn-jump btn-start" onclick="jumpToCodon('AUG')">▶ START (AUG)</button>
-                    <button class="btn-jump btn-stop" onclick="jumpToCodon(randomStop())">⏹ STOP</button>
+                    <button class="btn-jump btn-start"  onclick="jumpToCodon('AUG')">▶ START (AUG)</button>
+                    <button class="btn-jump btn-stop"   onclick="jumpToCodon(randomStop())">⏹ STOP</button>
                     <button class="btn-jump btn-random" onclick="jumpToRandomCodon()">🎲 Random</button>
                 </div>
             </div>
@@ -586,15 +362,15 @@
                     <span class="base-1">U</span><span class="base-2">U</span><span class="base-3">U</span>
                 </div>
                 <div class="aa-name-mini" id="aaName">Phenylalanine</div>
-                <div class="aa-result-mini" id="aaResult" style="background: #FF6B6B;">Phe</div>
-                <div id="specialTag" class="special-tag-mini" style="background: #5352ed; color: white;">Normal Codon</div>
+                <div class="aa-result-mini" id="aaResult" style="background:#FF6B6B;">Phe</div>
+                <div id="specialTag" class="special-tag-mini" style="background:#5352ed; color:white;">Normal Codon</div>
                 <div class="degeneracy-mini" id="degeneracyInfo">
                     This amino acid is coded by <strong>2</strong> codons: UUU, UUC
                 </div>
             </div>
         </div>
 
-        <!-- ===== STATS BAR ===== -->
+        <!-- Stats Bar -->
         <div class="stats-bar">
             <div class="stat-card"><div class="stat-number">64</div><div class="stat-label">Total Codons</div></div>
             <div class="stat-card"><div class="stat-number">61</div><div class="stat-label">Coding</div></div>
@@ -603,9 +379,8 @@
             <div class="stat-card"><div class="stat-number">AUG</div><div class="stat-label">Start Codon</div></div>
         </div>
 
-        <!-- ===== PANELS GRID ===== -->
+        <!-- Panels Grid -->
         <div class="panels-grid">
-            <!-- Panel 1: Codon Decoder -->
             <div class="panel">
                 <h2>🔍 Codon Decoder</h2>
                 <p class="hint">Enter a 3-letter codon or use the dialer above</p>
@@ -614,7 +389,6 @@
                 <div class="result-box" id="decoderResult">Type a codon and click Decode...</div>
             </div>
 
-            <!-- Panel 2: mRNA Translator -->
             <div class="panel">
                 <h2>📝 mRNA Translator</h2>
                 <p class="hint">Enter mRNA sequence — only A, U, G, C allowed (no T — this is RNA!)</p>
@@ -623,7 +397,6 @@
                 <div class="result-box" id="mrnaResult">Enter mRNA sequence...</div>
             </div>
 
-            <!-- Panel 3: Mutation Simulator -->
             <div class="panel">
                 <h2>⚡ Mutation Simulator</h2>
                 <p class="hint">Load a translated mRNA, then mutate it to see effects</p>
@@ -635,7 +408,6 @@
                 </div>
             </div>
 
-            <!-- Panel 4: Interactive Codon Table -->
             <div class="panel">
                 <h2>📊 Interactive Codon Table</h2>
                 <p class="hint">Click any codon — or use the dialer to highlight</p>
@@ -643,23 +415,9 @@
                 <div class="result-box" id="tableResult" style="margin-top:10px;">Click a codon above...</div>
             </div>
         </div>
-
-        <!-- ===== FEATURES ===== -->
-        <div class="panel" style="margin-top: 5px;">
-            <h2>✨ Properties of the Genetic Code</h2>
-            <div class="features-grid">
-                <div class="feature-card"><h4>Triplet Nature</h4><p>3 bases = 1 codon. 4³ = 64 possible combinations.</p></div>
-                <div class="feature-card"><h4>Degenerate</h4><p>Multiple codons code for same amino acid. Leucine has 6 codons!</p></div>
-                <div class="feature-card"><h4>Unambiguous</h4><p>One codon codes for only ONE specific amino acid.</p></div>
-                <div class="feature-card"><h4>Universal</h4><p>Same code in bacteria, plants, animals (nearly universal).</p></div>
-                <div class="feature-card"><h4>Non-overlapping</h4><p>Each base is read only once as part of one codon.</p></div>
-                <div class="feature-card"><h4>Comma-less</h4><p>No gaps between codons; continuous reading.</p></div>
-                <div class="feature-card"><h4>Non-ambiguous</h4><p>No codon codes for more than one amino acid.</p></div>
-                <div class="feature-card"><h4>Wobble Hypothesis</h4><p>3rd base is less critical; allows flexibility in pairing.</p></div>
             </div>
         </div>
 
-        <!-- Legend -->
         <div class="legend">
             <div class="legend-item"><div class="legend-color" style="background:#4ecdc4"></div> U</div>
             <div class="legend-item"><div class="legend-color" style="background:#ff6b6b"></div> C</div>
@@ -671,58 +429,55 @@
     </div>
 
     <script>
-
-        // ===== SHARED GENETIC CODE DATA =====
+        // ===== GENETIC CODE DATA =====
         const geneticCode = {
-            'UUU': 'Phe', 'UUC': 'Phe', 'UUA': 'Leu', 'UUG': 'Leu',
-            'UCU': 'Ser', 'UCC': 'Ser', 'UCA': 'Ser', 'UCG': 'Ser',
-            'UAU': 'Tyr', 'UAC': 'Tyr', 'UAA': 'STOP', 'UAG': 'STOP',
-            'UGU': 'Cys', 'UGC': 'Cys', 'UGA': 'STOP', 'UGG': 'Trp',
-            'CUU': 'Leu', 'CUC': 'Leu', 'CUA': 'Leu', 'CUG': 'Leu',
-            'CCU': 'Pro', 'CCC': 'Pro', 'CCA': 'Pro', 'CCG': 'Pro',
-            'CAU': 'His', 'CAC': 'His', 'CAA': 'Gln', 'CAG': 'Gln',
-            'CGU': 'Arg', 'CGC': 'Arg', 'CGA': 'Arg', 'CGG': 'Arg',
-            'AUU': 'Ile', 'AUC': 'Ile', 'AUA': 'Ile', 'AUG': 'Met',
-            'ACU': 'Thr', 'ACC': 'Thr', 'ACA': 'Thr', 'ACG': 'Thr',
-            'AAU': 'Asn', 'AAC': 'Asn', 'AAA': 'Lys', 'AAG': 'Lys',
-            'AGU': 'Ser', 'AGC': 'Ser', 'AGA': 'Arg', 'AGG': 'Arg',
-            'GUU': 'Val', 'GUC': 'Val', 'GUA': 'Val', 'GUG': 'Val',
-            'GCU': 'Ala', 'GCC': 'Ala', 'GCA': 'Ala', 'GCG': 'Ala',
-            'GAU': 'Asp', 'GAC': 'Asp', 'GAA': 'Glu', 'GAG': 'Glu',
-            'GGU': 'Gly', 'GGC': 'Gly', 'GGA': 'Gly', 'GGG': 'Gly'
+            'UUU':'Phe','UUC':'Phe','UUA':'Leu','UUG':'Leu',
+            'UCU':'Ser','UCC':'Ser','UCA':'Ser','UCG':'Ser',
+            'UAU':'Tyr','UAC':'Tyr','UAA':'STOP','UAG':'STOP',
+            'UGU':'Cys','UGC':'Cys','UGA':'STOP','UGG':'Trp',
+            'CUU':'Leu','CUC':'Leu','CUA':'Leu','CUG':'Leu',
+            'CCU':'Pro','CCC':'Pro','CCA':'Pro','CCG':'Pro',
+            'CAU':'His','CAC':'His','CAA':'Gln','CAG':'Gln',
+            'CGU':'Arg','CGC':'Arg','CGA':'Arg','CGG':'Arg',
+            'AUU':'Ile','AUC':'Ile','AUA':'Ile','AUG':'Met',
+            'ACU':'Thr','ACC':'Thr','ACA':'Thr','ACG':'Thr',
+            'AAU':'Asn','AAC':'Asn','AAA':'Lys','AAG':'Lys',
+            'AGU':'Ser','AGC':'Ser','AGA':'Arg','AGG':'Arg',
+            'GUU':'Val','GUC':'Val','GUA':'Val','GUG':'Val',
+            'GCU':'Ala','GCC':'Ala','GCA':'Ala','GCG':'Ala',
+            'GAU':'Asp','GAC':'Asp','GAA':'Glu','GAG':'Glu',
+            'GGU':'Gly','GGC':'Gly','GGA':'Gly','GGG':'Gly'
         };
 
         const aaColors = {
-            'Phe': '#FF6B6B', 'Leu': '#FF8E53', 'Ile': '#FFD93D', 'Met': '#6BCB77',
-            'Val': '#4D96FF', 'Ser': '#9B59B6', 'Pro': '#E74C3C', 'Thr': '#F39C12',
-            'Ala': '#2ECC71', 'Tyr': '#3498DB', 'His': '#E67E22', 'Gln': '#1ABC9C',
-            'Asn': '#9B59B6', 'Lys': '#FF6B9D', 'Asp': '#C0392B', 'Glu': '#16A085',
-            'Cys': '#8E44AD', 'Trp': '#D35400', 'Arg': '#2980B9', 'Gly': '#27AE60',
-            'STOP': '#2C3E50'
+            'Phe':'#FF6B6B','Leu':'#FF8E53','Ile':'#FFD93D','Met':'#6BCB77',
+            'Val':'#4D96FF','Ser':'#9B59B6','Pro':'#E74C3C','Thr':'#F39C12',
+            'Ala':'#2ECC71','Tyr':'#3498DB','His':'#E67E22','Gln':'#1ABC9C',
+            'Asn':'#9B59B6','Lys':'#FF6B9D','Asp':'#C0392B','Glu':'#16A085',
+            'Cys':'#8E44AD','Trp':'#D35400','Arg':'#2980B9','Gly':'#27AE60',
+            'STOP':'#2C3E50'
         };
 
         const aaFullNames = {
-            'Phe': 'Phenylalanine', 'Leu': 'Leucine', 'Ile': 'Isoleucine', 'Met': 'Methionine',
-            'Val': 'Valine', 'Ser': 'Serine', 'Pro': 'Proline', 'Thr': 'Threonine',
-            'Ala': 'Alanine', 'Tyr': 'Tyrosine', 'His': 'Histidine', 'Gln': 'Glutamine',
-            'Asn': 'Asparagine', 'Lys': 'Lysine', 'Asp': 'Aspartic Acid', 'Glu': 'Glutamic Acid',
-            'Cys': 'Cysteine', 'Trp': 'Tryptophan', 'Arg': 'Arginine', 'Gly': 'Glycine',
-            'STOP': 'STOP (Termination)'
+            'Phe':'Phenylalanine','Leu':'Leucine','Ile':'Isoleucine','Met':'Methionine',
+            'Val':'Valine','Ser':'Serine','Pro':'Proline','Thr':'Threonine',
+            'Ala':'Alanine','Tyr':'Tyrosine','His':'Histidine','Gln':'Glutamine',
+            'Asn':'Asparagine','Lys':'Lysine','Asp':'Aspartic Acid','Glu':'Glutamic Acid',
+            'Cys':'Cysteine','Trp':'Tryptophan','Arg':'Arginine','Gly':'Glycine',
+            'STOP':'STOP (Termination)'
         };
 
-        // Ring state
+        // ===== RING STATE =====
         const ringState = { 1: 0, 2: 0, 3: 0 };
         const bases = ['U', 'C', 'A', 'G'];
-        const baseColors = { U: '#4ecdc4', C: '#ff6b6b', A: '#ffe66d', G: '#95e1d3' };
+        const baseColors = { U:'#4ecdc4', C:'#ff6b6b', A:'#ffe66d', G:'#95e1d3' };
 
-        // Track active codon for table highlighting
         let activeCodon = 'UUU';
 
-        // ===== BUILD RING 2 =====
+        // ===== BUILD RING 2 (16 segments, 4 groups of U C A G) =====
         function buildRing2() {
             const container = document.getElementById('ring2-segments');
-            const radius = 100;
-            const labelRadius = 68;
+            const outerRadius = 105, innerRadius = 58, labelRadius = 82;
             const segmentCount = 16;
             const anglePerSegment = 360 / segmentCount;
 
@@ -731,23 +486,27 @@
                 const color = baseColors[base];
                 const centerAngle = i * anglePerSegment;
                 const startAngle = centerAngle - anglePerSegment / 2;
-                const endAngle = centerAngle + anglePerSegment / 2;
-
+                const endAngle   = centerAngle + anglePerSegment / 2;
                 const startRad = startAngle * Math.PI / 180;
-                const endRad = endAngle * Math.PI / 180;
-                const x1 = (radius * Math.sin(startRad)).toFixed(2);
-                const y1 = (-radius * Math.cos(startRad)).toFixed(2);
-                const x2 = (radius * Math.sin(endRad)).toFixed(2);
-                const y2 = (-radius * Math.cos(endRad)).toFixed(2);
+                const endRad   = endAngle   * Math.PI / 180;
+
+                const x1o = (outerRadius * Math.sin(startRad)).toFixed(2);
+                const y1o = (-outerRadius * Math.cos(startRad)).toFixed(2);
+                const x2o = (outerRadius * Math.sin(endRad)).toFixed(2);
+                const y2o = (-outerRadius * Math.cos(endRad)).toFixed(2);
+                const x1i = (innerRadius * Math.sin(startRad)).toFixed(2);
+                const y1i = (-innerRadius * Math.cos(startRad)).toFixed(2);
+                const x2i = (innerRadius * Math.sin(endRad)).toFixed(2);
+                const y2i = (-innerRadius * Math.cos(endRad)).toFixed(2);
 
                 const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                path.setAttribute('d', `M 0,0 L ${x1},${y1} A ${radius},${radius} 0 0,1 ${x2},${y2} Z`);
+                path.setAttribute('d', `M ${x1i},${y1i} L ${x1o},${y1o} A ${outerRadius},${outerRadius} 0 0,1 ${x2o},${y2o} L ${x2i},${y2i} A ${innerRadius},${innerRadius} 0 0,0 ${x1i},${y1i} Z`);
                 path.setAttribute('fill', color);
                 path.setAttribute('stroke', '#fff');
                 path.setAttribute('stroke-width', '1');
                 path.setAttribute('class', 'segment');
                 path.setAttribute('data-index', i);
-                path.setAttribute('onclick', `jumpToBase(2, ${i})`);
+                path.setAttribute('onclick', `jumpToBase(2,${i})`);
                 container.appendChild(path);
 
                 const labelRad = centerAngle * Math.PI / 180;
@@ -769,49 +528,49 @@
             }
         }
 
-        // ===== BUILD RING 3 - FULL CIRCLE, 4 equal 90-degree segments =====
+        // ===== BUILD RING 3 (4 segments - 3rd base) =====
+        // Uses the same top-origin sin/cos convention as rings 1 & 2:
+        //   angle 0deg = 12 o'clock, positive clockwise
+        //   x = R * sin(angle),  y = -R * cos(angle)
         function buildRing3() {
             const container = document.getElementById('ring3-segments');
-            const radius = 160;
-            const innerRadius = 105;
-            const anglePerSegment = 360 / 4; // 90 degrees each
-            const halfAngle = anglePerSegment / 2; // 45 degrees
+            const radius = 168, innerRadius = 118;
+            const segmentCount = 4;
+            const anglePerSegment = 360 / segmentCount;
 
-            for (let i = 0; i < 4; i++) {
+            for (let i = 0; i < segmentCount; i++) {
                 const base = bases[i];
                 const color = baseColors[base];
-
-                const centerAngle = -90 + i * anglePerSegment;
-                const startAngle = centerAngle - halfAngle;
-                const endAngle = centerAngle + halfAngle;
-
+                const centerAngle = i * anglePerSegment;
+                const startAngle  = centerAngle - anglePerSegment / 2;
+                const endAngle    = centerAngle + anglePerSegment / 2;
                 const startRad = startAngle * Math.PI / 180;
-                const endRad = endAngle * Math.PI / 180;
+                const endRad   = endAngle   * Math.PI / 180;
 
-                const x1 = Math.cos(startRad) * radius;
-                const y1 = Math.sin(startRad) * radius;
-                const x2 = Math.cos(endRad) * radius;
-                const y2 = Math.sin(endRad) * radius;
-
-                const x3 = Math.cos(endRad) * innerRadius;
-                const y3 = Math.sin(endRad) * innerRadius;
-                const x4 = Math.cos(startRad) * innerRadius;
-                const y4 = Math.sin(startRad) * innerRadius;
+                // Top-origin convention (matches rings 1 & 2)
+                const x1o = (radius      * Math.sin(startRad)).toFixed(3);
+                const y1o = (-radius     * Math.cos(startRad)).toFixed(3);
+                const x2o = (radius      * Math.sin(endRad)).toFixed(3);
+                const y2o = (-radius     * Math.cos(endRad)).toFixed(3);
+                const x1i = (innerRadius * Math.sin(startRad)).toFixed(3);
+                const y1i = (-innerRadius * Math.cos(startRad)).toFixed(3);
+                const x2i = (innerRadius * Math.sin(endRad)).toFixed(3);
+                const y2i = (-innerRadius * Math.cos(endRad)).toFixed(3);
 
                 const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                path.setAttribute('d', `M ${x4},${y4} L ${x1},${y1} A ${radius},${radius} 0 0,1 ${x2},${y2} L ${x3},${y3} A ${innerRadius},${innerRadius} 0 0,0 ${x4},${y4} Z`);
+                path.setAttribute('d', `M ${x1i},${y1i} L ${x1o},${y1o} A ${radius},${radius} 0 0,1 ${x2o},${y2o} L ${x2i},${y2i} A ${innerRadius},${innerRadius} 0 0,0 ${x1i},${y1i} Z`);
                 path.setAttribute('fill', color);
                 path.setAttribute('stroke', '#fff');
                 path.setAttribute('stroke-width', '2');
                 path.setAttribute('class', 'segment');
                 path.setAttribute('data-index', i);
-                path.setAttribute('onclick', `jumpToBase(3, ${i})`);
+                path.setAttribute('onclick', `jumpToBase(3,${i})`);
                 container.appendChild(path);
 
                 const centerRad = centerAngle * Math.PI / 180;
                 const textR = (radius + innerRadius) / 2;
-                const tx = Math.cos(centerRad) * textR;
-                const ty = Math.sin(centerRad) * textR;
+                const tx = (textR * Math.sin(centerRad)).toFixed(3);
+                const ty = (-textR * Math.cos(centerRad)).toFixed(3);
 
                 const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
                 text.setAttribute('x', tx);
@@ -828,144 +587,169 @@
             }
         }
 
-        // ===== RING ROTATION =====
+                // ===== RING ROTATION =====
         function rotateRing(ringNum, direction) {
-            const segmentCount = ringNum === 1 ? 4 : (ringNum === 2 ? 16 : 4);
+            const segmentCount = ringNum === 2 ? 16 : 4;
             ringState[ringNum] = (ringState[ringNum] + direction + segmentCount) % segmentCount;
             applyRingRotation(ringNum, segmentCount);
             updateResult();
         }
 
+        // BUG FIX 1: jumpToBase for ring 2 now normalises the index to the first
+        // matching group (0–3) before back-rotating, so the reading pointer always
+        // lands on a segment whose label matches the desired base, regardless of
+        // which of the four repeated groups we were previously on.
         function jumpToBase(ringNum, segmentIndex) {
-            const segmentCount = ringNum === 1 ? 4 : (ringNum === 2 ? 16 : 4);
-            if (ringNum === 3) {
-                // Ring 3: segmentIndex is 0-3, store directly
-                ringState[ringNum] = segmentIndex % 4;
-            } else {
-                // Ring 1 (0-3) and Ring 2 (0-15): back-rotate by segmentIndex steps
-                ringState[ringNum] = (segmentCount - segmentIndex) % segmentCount;
-            }
+            const segmentCount = ringNum === 2 ? 16 : 4;
+            // For ring 2 use only the canonical group (0-3); all four groups decode
+            // identically so this is lossless, and it keeps ringState in 0-3 so the
+            // highlight math below stays consistent.
+            const canonicalIndex = ringNum === 2 ? (segmentIndex % 4) : segmentIndex;
+            ringState[ringNum] = (segmentCount - canonicalIndex) % segmentCount;
             applyRingRotation(ringNum, segmentCount);
             updateResult();
         }
 
         function applyRingRotation(ringNum, segmentCount) {
             const ring = document.getElementById('ring' + ringNum);
-            // All rings use the same formula: state * (360 / segmentCount)
-            // Ring 3 has 4 segments of 90 degrees each, so steps are 0, -90, -180, -270
             const rotation = ringState[ringNum] * (360 / segmentCount);
             ring.style.transform = `rotate(${rotation}deg)`;
+            // Counter-rotate text labels so they stay upright
+            ring.querySelectorAll('.segment-text').forEach(text => {
+                text.style.transform = `rotate(${-rotation}deg)`;
+            });
         }
 
         function jumpToCodon(codon) {
             jumpToBase(1, bases.indexOf(codon[0]));
-            // Ring 2 has 16 segments (4 groups of U,C,A,G repeated).
-            // bases.indexOf gives 0-3; the first matching slot on ring 2 is that same index
-            // since segments repeat as U(0),C(1),A(2),G(3),U(4),...
-            // We use the raw base index directly as the target slot (0-3 maps to first group)
             jumpToBase(2, bases.indexOf(codon[1]));
             jumpToBase(3, bases.indexOf(codon[2]));
         }
 
         function jumpToRandomCodon() {
             const allCodons = Object.keys(geneticCode);
-            const random = allCodons[Math.floor(Math.random() * allCodons.length)];
-            jumpToCodon(random);
+            jumpToCodon(allCodons[Math.floor(Math.random() * allCodons.length)]);
         }
 
         function randomStop() {
-            const stops = ['UAA', 'UAG', 'UGA'];
-            return stops[Math.floor(Math.random() * stops.length)];
+            return ['UAA','UAG','UGA'][Math.floor(Math.random() * 3)];
         }
 
         // ===== HIGHLIGHT & UPDATE =====
+        // BUG FIX 2: Ring 2 has 16 segments (4×U, 4×C, 4×A, 4×G).  Previously only
+        // the single segment whose index exactly matched `top2` was highlighted, so
+        // three of the four visually-identical segments stayed dim.  Now we compute
+        // the base name at the reading window and highlight *every* segment that
+        // carries that label (i.e. all four occurrences).
         function highlightSelection() {
-            const top1 = (4 - ringState[1]) % 4;
-            const top2 = (16 - ringState[2]) % 16;
-            const top3 = ringState[3];
+            const top1 = (4  - ringState[1]) % 4;
+            const top3 = (4  - ringState[3]) % 4;
+            // For ring 2, ringState is kept in 0-3 (canonical group), so the
+            // highlighted base name is simply bases[top1 formula applied to ring2]:
+            const top2base = bases[(4 - ringState[2] % 4 + 4) % 4];
 
+            // Ring 1 — 4 segments
+            const ring1 = document.getElementById('ring1');
+            let any1 = false;
             document.querySelectorAll('#ring1 .segment').forEach(seg => {
-                seg.classList.toggle('segment-selected', parseInt(seg.dataset.index) === top1);
+                const isSelected = parseInt(seg.dataset.index) === top1;
+                seg.classList.toggle('segment-selected', isSelected);
+                if (isSelected) any1 = true;
             });
+            ring1.classList.toggle('faded', any1);
+
+            // Ring 2 — 16 segments: highlight ALL segments whose label matches the
+            //           current top base (there are exactly 4 of them).
+            const ring2 = document.getElementById('ring2');
+            let any2 = false;
             document.querySelectorAll('#ring2 .segment').forEach(seg => {
-                seg.classList.toggle('segment-selected', parseInt(seg.dataset.index) === top2);
+                const idx = parseInt(seg.dataset.index);
+                const isSelected = (bases[idx % 4] === top2base);
+                seg.classList.toggle('segment-selected', isSelected);
+                if (isSelected) any2 = true;
             });
+            ring2.classList.toggle('faded', any2);
+
+            // Ring 3 — 4 segments
+            const ring3 = document.getElementById('ring3');
+            let any3 = false;
             document.querySelectorAll('#ring3 .segment').forEach(seg => {
-                seg.classList.toggle('segment-selected', parseInt(seg.dataset.index) === top3);
+                const isSelected = parseInt(seg.dataset.index) === top3;
+                seg.classList.toggle('segment-selected', isSelected);
+                if (isSelected) any3 = true;
             });
+            ring3.classList.toggle('faded', any3);
         }
 
         function updateResult() {
-            const firstIdx = (4 - ringState[1]) % 4;
-            const secondIdx = ((16 - ringState[2]) % 16 + 16) % 16 % 4;
-            const thirdIdx = ringState[3];
+            const firstIdx  = (4  - ringState[1]) % 4;
+            const secondIdx = (4  - ringState[2] % 4 + 4) % 4;
+            const thirdIdx  = (4  - ringState[3]) % 4;
 
-            const first = bases[firstIdx];
+            const first  = bases[firstIdx];
             const second = bases[secondIdx];
-            const third = bases[thirdIdx];
-            const codon = first + second + third;
-            const aa = geneticCode[codon];
-            activeCodon = codon;
+            const third  = bases[thirdIdx];
+            const codon  = first + second + third;
+            const aa     = geneticCode[codon];
+            activeCodon  = codon;
 
-            // Update position displays
             document.getElementById('pos1').textContent = first;
             document.getElementById('pos2').textContent = second;
             document.getElementById('pos3').textContent = third;
 
-            // Update side result
-            document.getElementById('codonDisplay').innerHTML = 
+            // Glow buttons
+            document.querySelectorAll('.ring-control-mini').forEach(el => { el.className = 'ring-control-mini'; });
+            [first, second, third].forEach((b, i) => {
+                const idx = bases.indexOf(b);
+                if (idx >= 0) document.querySelectorAll('.ring-control-mini')[i].classList.add('active-' + (idx + 1));
+            });
+
+            const sideResult = document.getElementById('sideResult');
+            sideResult.classList.add('updating');
+            setTimeout(() => sideResult.classList.remove('updating'), 400);
+
+            document.getElementById('codonDisplay').innerHTML =
                 `<span class="base-1">${first}</span><span class="base-2">${second}</span><span class="base-3">${third}</span>`;
 
             const aaResult = document.getElementById('aaResult');
             aaResult.textContent = aa;
             aaResult.style.background = aaColors[aa];
-
             document.getElementById('aaName').textContent = aaFullNames[aa];
 
             const tag = document.getElementById('specialTag');
             if (codon === 'AUG') {
-                tag.textContent = '🟢 START CODON';
-                tag.style.background = '#2ed573';
-                tag.style.color = '#000';
+                tag.textContent = '🟢 START CODON'; tag.style.background = '#2ed573'; tag.style.color = '#000';
             } else if (aa === 'STOP') {
-                tag.textContent = '🔴 STOP CODON';
-                tag.style.background = '#ff4757';
-                tag.style.color = '#fff';
+                tag.textContent = '🔴 STOP CODON'; tag.style.background = '#ff4757'; tag.style.color = '#fff';
             } else {
-                tag.textContent = 'Normal Codon';
-                tag.style.background = '#5352ed';
-                tag.style.color = '#fff';
+                tag.textContent = 'Normal Codon'; tag.style.background = '#5352ed'; tag.style.color = '#fff';
             }
 
             const allCodons = Object.keys(geneticCode).filter(c => geneticCode[c] === aa);
-            document.getElementById('degeneracyInfo').innerHTML = 
+            document.getElementById('degeneracyInfo').innerHTML =
                 `This amino acid is coded by <strong>${allCodons.length}</strong> codon(s): ${allCodons.join(', ')}`;
 
             highlightSelection();
 
-            // Auto-update decoder panel and table
+
             updateDecoderFromDialer(codon, aa);
             highlightCodonInTable(codon);
         }
 
         // ===== PANEL INTEGRATION =====
         function updateDecoderFromDialer(codon, aa) {
-            const resultDiv = document.getElementById('decoderResult');
             const fullName = aaFullNames[aa];
             const color = aaColors[aa];
-            const isStart = codon === 'AUG';
-            const isStop = aa === 'STOP';
+            const isStart = codon === 'AUG', isStop = aa === 'STOP';
             const badgeClass = isStart ? 'start-badge' : (isStop ? 'stop-badge' : 'normal-badge');
-            const extraInfo = isStart ? ' 🟢 START CODON' : (isStop ? ' 🔴 STOP CODON' : '');
-
-            resultDiv.innerHTML = `
+            const extraInfo  = isStart ? ' 🟢 START CODON' : (isStop ? ' 🔴 STOP CODON' : '');
+            document.getElementById('decoderResult').innerHTML = `
                 <div style="font-size:1.1em;">
-                    <strong>${codon}</strong> → 
+                    <strong>${codon}</strong> →
                     <span class="aa-badge ${badgeClass}" style="background:${color}">${aa} (${fullName})</span>
                     ${extraInfo}
                 </div>
-                <div style="margin-top:8px; color:#888; font-size:0.85em;">${getDegeneracyInfo(aa)}</div>
-            `;
+                <div style="margin-top:8px; color:#888; font-size:0.85em;">${getDegeneracyInfo(aa)}</div>`;
         }
 
         function getDegeneracyInfo(aa) {
@@ -981,33 +765,34 @@
             const fullName = aaFullNames[aa];
             const allCodons = Object.keys(geneticCode).filter(c => geneticCode[c] === aa);
             document.getElementById('tableResult').innerHTML = `
-                <strong style="color:${aaColors[aa]}">${codon}</strong> → ${aa} (${fullName}) | 
+                <strong style="color:${aaColors[aa]}">${codon}</strong> → ${aa} (${fullName}) |
                 All codons: <strong>${allCodons.join(', ')}</strong> (${allCodons.length} total)
                 ${codon === 'AUG' ? '<span style="color:#2ed573;"> 🟢 START</span>' : ''}
-                ${aa === 'STOP' ? '<span style="color:#ff4757;"> 🔴 STOP</span>' : ''}
-            `;
+                ${aa === 'STOP' ? '<span style="color:#ff4757;"> 🔴 STOP</span>' : ''}`;
         }
 
         // ===== CODON DECODER =====
         function decodeCodon() {
             const input = document.getElementById('codonInput').value.toUpperCase().trim();
             const resultDiv = document.getElementById('decoderResult');
-
             if (input.length !== 3 || !/^[AUGC]{3}$/.test(input)) {
                 resultDiv.innerHTML = '<span style="color:#ff4757;">⚠️ Enter exactly 3 bases (A, U, G, C)</span>';
                 return;
             }
-
-            // Directly update decoder panel, then sync dialer
             const aa = geneticCode[input];
             updateDecoderFromDialer(input, aa);
-            // Rotate dialer to match (may or may not change state)
             jumpToCodon(input);
         }
 
         // ===== mRNA TRANSLATOR =====
+        // BUG FIX 3: Clear stale translation data whenever the user edits the input
+        // field, so "Load from Translator" can't silently load an outdated sequence.
+        document.getElementById('mrnaInput').addEventListener('input', function() {
+            window.lastTranslatedSeq = null;
+            window.lastTranslatedSeqTime = null;
+        });
+
         function translateMRNA() {
-            // Input is already sanitised (uppercase, only AUGC) by the live listener
             const input = document.getElementById('mrnaInput').value.trim();
             const resultDiv = document.getElementById('mrnaResult');
 
@@ -1030,108 +815,115 @@
                 const codon = codingSeq.substring(i, i + 3);
                 if (codon.length < 3) break;
                 const aa = geneticCode[codon];
-                if (!aa) break; // unknown codon — stop gracefully
+                if (!aa) break;
                 if (aa === 'STOP') {
-                    protein.push({aa: 'STOP', codon: codon, stop: true});
+                    protein.push({aa:'STOP', codon:codon, stop:true});
                     stopped = true;
                     break;
                 }
-                protein.push({aa: aa, codon: codon, stop: false});
+                protein.push({aa:aa, codon:codon, stop:false});
             }
 
-            let html = '';
-            html += '<div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:10px;">';
+            let html = '<div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:10px;">';
             protein.forEach((p, idx) => {
                 const color = aaColors[p.aa];
                 const badgeClass = p.stop ? 'stop-badge' : (idx === 0 ? 'start-badge' : 'normal-badge');
                 html += `<span class="aa-badge ${badgeClass}" style="background:${color}" title="${p.codon}">${p.aa}</span>`;
             });
-            if (!stopped) html += '<span style="color:#ff4757;">⚠️ No STOP</span>';
+            if (!stopped) html += '<span class="aa-badge" style="background:#ff4757;">⚠️ No STOP</span>';
             html += '</div>';
             const aaCount = protein.filter(p => !p.stop).length;
             html += `<div style="color:#888; font-size:0.85em;">${aaCount} amino acid${aaCount !== 1 ? 's' : ''}${stopped ? ' + STOP codon' : ' (no STOP codon found)'}</div>`;
-
             resultDiv.innerHTML = html;
 
-            // Store for mutation simulator, tagged with session timestamp
-            window.lastTranslatedSeq = codingSeq;
+            // BUG FIX 4: Exclude the STOP codon triplet from the mutable region.
+            // The mutation simulator should only expose coding bases (Met … last AA),
+            // not the termination codon, since the stop signal is not an amino acid
+            // and mutating it produces a misleading "amino acid changed" report.
+            const codingOnlyCount = protein.filter(p => !p.stop).length;
+            window.lastTranslatedSeq = codingSeq.substring(0, codingOnlyCount * 3);
             window.lastTranslatedSeqTime = Date.now();
         }
 
-        // ===== MUTATION SIMULATOR (Linked to Translator) =====
-        let mutSourceSeq = '';
-        let mutSourceProtein = '';
-        let mutCurrentSeq = '';
-        let mutSelectedPos = -1;
+        // ===== MUTATION SIMULATOR =====
+        let mutSourceSeq = '', mutSourceProtein = '', mutCurrentSeq = '', mutSelectedPos = -1;
 
         function loadFromTranslator() {
             const resultDiv = document.getElementById('mutResult');
-
             const seq = window.lastTranslatedSeq;
-            const t = window.lastTranslatedSeqTime;
+            const t   = window.lastTranslatedSeqTime;
 
-            // No translation done this session, or sequence too short
-            if (!seq || seq.length < 6 || !t) {
+            if (!seq || !t) {
                 resultDiv.innerHTML = '<div class="no-data-msg">⚠️ First translate an mRNA sequence in the <strong>mRNA Translator</strong> panel above, then come back here!</div>';
                 return;
             }
+            if (seq.length < 6) {
+                resultDiv.innerHTML = '<div class="no-data-msg">⚠️ That translation is only 1 codon long — try a longer mRNA sequence (at least 2 codons) to see mutation effects.</div>';
+                return;
+            }
 
-            mutSourceSeq = seq;
-            mutSourceProtein = translateSequence(mutSourceSeq);
-            mutCurrentSeq = mutSourceSeq;
-            mutSelectedPos = -1;
-
+            mutSourceSeq     = seq;
+            mutSourceProtein = renderProteinBadges(mutSourceSeq);
+            mutCurrentSeq    = mutSourceSeq;
+            mutSelectedPos   = -1;
             renderMutationInterface();
+        }
+
+        function renderProteinBadges(seq) {
+            let html = '';
+            for (let i = 0; i < seq.length - 2; i += 3) {
+                const codon = seq.substring(i, i + 3);
+                if (codon.length < 3) break;
+                const aa = geneticCode[codon];
+                if (!aa) break;
+                const color = aaColors[aa];
+                const badgeClass = aa === 'STOP' ? 'stop-badge' : (i === 0 ? 'start-badge' : 'normal-badge');
+                html += `<span class="aa-badge ${badgeClass}" style="background:${color}" title="${codon}">${aa}</span>`;
+                if (aa === 'STOP') break;
+            }
+            return html || '<span style="color:#666;">—</span>';
         }
 
         function renderMutationInterface() {
             const resultDiv = document.getElementById('mutResult');
-
             let html = '';
 
-            // Box 1: Original from Translator (read-only)
             html += '<div class="mut-source-box">';
             html += '<h5>📥 Loaded from Translator (Original)</h5>';
             html += '<div class="seq-row">' + renderBases(mutSourceSeq, -1, false) + '</div>';
             html += '<div class="prot-row"><strong>Protein:</strong> ' + mutSourceProtein + '</div>';
             html += '</div>';
 
-            // Box 2: Interactive Mutation Area
             html += '<div class="mut-interactive-box">';
             html += '<h5>✏️ Click any base to mutate it</h5>';
             html += '<div class="instruction">Click a base below → choose new base → see effect</div>';
             html += '<div class="seq-row" id="interactiveSeq">' + renderBases(mutCurrentSeq, mutSelectedPos, true) + '</div>';
-
-            // Mutation controls
             html += '<div class="mut-controls">';
             html += '<button class="btn-action" onclick="applyRandomMutation()" style="background:linear-gradient(135deg,#7b2cbf,#ff4757);">🎲 Random Mutation</button>';
             html += '<button class="btn-action" onclick="resetMutation()" style="background:linear-gradient(135deg,#666,#999);">↺ Reset</button>';
             html += '</div>';
             html += '</div>';
 
-            // Comparison Box
-            if (mutCurrentSeq !== mutSourceSeq) {
-                html += renderComparison();
-            }
-
+            if (mutCurrentSeq !== mutSourceSeq) html += renderComparison();
             resultDiv.innerHTML = html;
         }
 
         function renderBases(seq, selectedPos, clickable) {
-            let html = '<div style="font-family:monospace; font-size:1.05em; line-height:2;">';
-            for (let i = 0; i < seq.length; i++) {
-                const base = seq[i];
-                if (clickable) {
-                    const isSelected = (i === selectedPos);
-                    const cls = `base-clickable base-${base} ${isSelected ? 'selected-for-mut' : ''}`;
-                    html += `<span class="${cls}" onclick="selectBaseForMutation(${i})" title="Click to mutate position ${i+1}">${base}</span>`;
-                } else {
-                    html += `<span class="base base-${base}">${base}</span>`;
+            let html = '<div style="font-family:monospace; font-size:1.05em; line-height:2; display:flex; flex-wrap:wrap; gap:2px;">';
+            for (let i = 0; i < seq.length; i += 3) {
+                const codon = seq.substring(i, i + 3);
+                if (!codon.length) break;
+                html += '<span style="display:inline-flex; white-space:nowrap; margin-right:8px;">';
+                for (let j = 0; j < codon.length; j++) {
+                    const base = codon[j], pos = i + j;
+                    if (clickable) {
+                        const cls = `base-clickable base-${base} ${pos === selectedPos ? 'selected-for-mut' : ''}`;
+                        html += `<span class="${cls}" onclick="selectBaseForMutation(${pos})" title="Click to mutate position ${pos+1}">${base}</span>`;
+                    } else {
+                        html += `<span class="base base-${base}">${base}</span>`;
+                    }
                 }
-                // Add space every 3 bases (codon separator)
-                if ((i + 1) % 3 === 0 && i < seq.length - 1) {
-                    html += '<span style="display:inline-block;width:12px;"></span>';
-                }
+                html += '</span>';
             }
             html += '</div>';
             return html;
@@ -1140,20 +932,14 @@
         function selectBaseForMutation(pos) {
             mutSelectedPos = pos;
             renderMutationInterface();
-
-            // Show base selector popup
-            const basesArr = ['A', 'U', 'G', 'C'];
             const currentBase = mutCurrentSeq[pos];
-            const options = basesArr.filter(b => b !== currentBase);
-
-            let selectorHtml = '<div style="margin-top:8px; padding:8px; background:rgba(0,0,0,0.3); border-radius:8px;">';
-            selectorHtml += '<span style="color:#888; font-size:0.8em;">Change position ' + (pos+1) + ' from <strong>' + currentBase + '</strong> to:</span> ';
+            const options = ['A','U','G','C'].filter(b => b !== currentBase);
+            let selectorHtml = `<div style="margin-top:8px; padding:8px; background:rgba(0,0,0,0.3); border-radius:8px;">
+                <span style="color:#888; font-size:0.8em;">Change position ${pos+1} from <strong>${currentBase}</strong> to:</span> `;
             options.forEach(b => {
-                selectorHtml += `<button class="btn-mini" style="margin:0 4px; width:36px; height:36px; font-size:1.1em;" onclick="applyMutation(${pos}, '${b}')">${b}</button>`;
+                selectorHtml += `<button class="btn-mini" style="margin:0 4px; width:36px; height:36px; font-size:1.1em;" onclick="applyMutation(${pos},'${b}')">${b}</button>`;
             });
             selectorHtml += '</div>';
-
-            // Append selector to the interactive box
             const box = document.querySelector('.mut-interactive-box');
             if (box) {
                 const existing = box.querySelector('.mut-selector');
@@ -1174,11 +960,9 @@
         function applyRandomMutation() {
             if (mutCurrentSeq.length < 3) return;
             const pos = Math.floor(Math.random() * mutCurrentSeq.length);
-            const basesArr = ['A', 'U', 'G', 'C'];
             const currentBase = mutCurrentSeq[pos];
-            const options = basesArr.filter(b => b !== currentBase);
-            const newBase = options[Math.floor(Math.random() * options.length)];
-            applyMutation(pos, newBase);
+            const options = ['A','U','G','C'].filter(b => b !== currentBase);
+            applyMutation(pos, options[Math.floor(Math.random() * options.length)]);
         }
 
         function resetMutation() {
@@ -1188,156 +972,126 @@
         }
 
         function renderComparison() {
-            const origProtein = translateSequence(mutSourceSeq);
-            const mutProtein = translateSequence(mutCurrentSeq);
-
-            // Find difference
-            let diffPos = -1;
+            let diffPositions = [];
             for (let i = 0; i < mutSourceSeq.length && i < mutCurrentSeq.length; i++) {
-                if (mutSourceSeq[i] !== mutCurrentSeq[i]) {
-                    diffPos = i;
-                    break;
+                if (mutSourceSeq[i] !== mutCurrentSeq[i]) diffPositions.push(i);
+            }
+            if (!diffPositions.length) return '<div class="mut-compare-box"><h5>🔬 Comparison</h5><div style="color:#888;">No difference detected.</div></div>';
+
+            const codonPositions = [...new Set(diffPositions.map(p => Math.floor(p / 3)))].sort((a,b) => a - b);
+            let effectsHtml = '';
+            codonPositions.forEach(cp => {
+                const origCodon = mutSourceSeq.substring(cp*3, cp*3+3);
+                const mutCodon  = mutCurrentSeq.substring(cp*3, cp*3+3);
+                const origAA = geneticCode[origCodon] || '?';
+                const mutAA  = geneticCode[mutCodon]  || '?';
+                let effectType, effectDesc, effectColor;
+                if (origAA === mutAA) {
+                    effectType = 'SILENT'; effectColor = '#2ed573';
+                    effectDesc = 'No change in amino acid — the genetic code is degenerate.';
+                } else if (mutAA === 'STOP') {
+                    effectType = 'NONSENSE'; effectColor = '#ff4757';
+                    effectDesc = 'Premature STOP codon — the protein is truncated here.';
+                } else {
+                    effectType = 'MISSENSE'; effectColor = '#ffa502';
+                    effectDesc = `${origAA} (${aaFullNames[origAA]}) → ${mutAA} (${aaFullNames[mutAA]}). May alter protein structure and function.`;
                 }
-            }
+                effectsHtml += `<div style="padding:10px; border-radius:8px; background:${effectColor}15; border:1px solid ${effectColor}; font-size:0.85em; margin-bottom:8px;">
+                    <strong style="color:${effectColor}">${effectType} MUTATION</strong> at codon ${cp+1} (${origCodon} → ${mutCodon})<br>
+                    <span style="color:#aaa;">${effectDesc}</span>
+                </div>`;
+            });
 
-            // Guard: no difference found (sequences are identical in overlapping region)
-            if (diffPos === -1) {
-                return '<div class="mut-compare-box"><h5>🔬 Comparison</h5><div style="color:#888;">No single-base difference detected.</div></div>';
-            }
-
-            const codonPos = Math.floor(diffPos / 3);
-            const origCodon = mutSourceSeq.substring(codonPos * 3, codonPos * 3 + 3);
-            const mutCodon = mutCurrentSeq.substring(codonPos * 3, codonPos * 3 + 3);
-            const origAA = geneticCode[origCodon] || '?';
-            const mutAA = geneticCode[mutCodon] || '?';
-
-            let effectType, effectDesc, effectColor;
-            if (origAA === mutAA) {
-                effectType = 'SILENT MUTATION';
-                effectDesc = 'No change in amino acid! The genetic code is degenerate.';
-                effectColor = '#2ed573';
-            } else if (mutAA === 'STOP') {
-                effectType = 'NONSENSE MUTATION';
-                effectDesc = 'Premature STOP codon! The protein will be truncated and likely non-functional.';
-                effectColor = '#ff4757';
-            } else {
-                effectType = 'MISSENSE MUTATION';
-                effectDesc = `Amino acid changed from ${origAA} (${aaFullNames[origAA]}) to ${mutAA} (${aaFullNames[mutAA]}). This may alter protein structure and function.`;
-                effectColor = '#ffa502';
-            }
-
-            let html = '<div class="mut-compare-box">';
-            html += '<h5>🔬 Comparison</h5>';
-            html += '<div style="display:flex; gap:15px; flex-wrap:wrap; margin-bottom:10px;">';
-            html += '<div style="flex:1; min-width:140px;"><div style="color:#888; font-size:0.75em; margin-bottom:4px;">ORIGINAL PROTEIN</div><div style="font-size:0.9em;">' + origProtein + '</div></div>';
-            html += '<div style="flex:1; min-width:140px;"><div style="color:#888; font-size:0.75em; margin-bottom:4px;">MUTATED PROTEIN</div><div style="font-size:0.9em; color:' + effectColor + ';">' + mutProtein + '</div></div>';
-            html += '</div>';
-            html += `<div style="padding:10px; border-radius:8px; background:${effectColor}15; border:1px solid ${effectColor}; font-size:0.85em;">
-                <strong style="color:${effectColor}">${effectType}</strong> at position ${diffPos + 1} (codon ${origCodon} → ${mutCodon})<br>
-                <span style="color:#aaa;">${effectDesc}</span>
+            return `<div class="mut-compare-box">
+                <h5>🔬 Comparison${codonPositions.length > 1 ? ` — ${codonPositions.length} codons affected` : ''}</h5>
+                <div style="display:flex; gap:15px; flex-wrap:wrap; margin-bottom:10px;">
+                    <div style="flex:1; min-width:140px;"><div style="color:#888; font-size:0.75em; margin-bottom:4px;">ORIGINAL PROTEIN</div><div style="font-size:0.9em;">${renderProteinBadges(mutSourceSeq)}</div></div>
+                    <div style="flex:1; min-width:140px;"><div style="color:#888; font-size:0.75em; margin-bottom:4px;">MUTATED PROTEIN</div><div style="font-size:0.9em;">${renderProteinBadges(mutCurrentSeq)}</div></div>
+                </div>
+                ${effectsHtml}
             </div>`;
-            html += '</div>';
-            return html;
         }
 
-        function translateSequence(seq) {
-            let protein = [];
-            for (let i = 0; i < seq.length - 2; i += 3) {
-                const codon = seq.substring(i, i + 3);
-                if (codon.length < 3) break;
-                if (!/^[AUGC]{3}$/.test(codon)) break; // skip invalid codons
-                const aa = geneticCode[codon];
-                if (!aa) break; // unknown codon — stop gracefully
-                if (aa === 'STOP') { protein.push('STOP'); break; }
-                protein.push(aa);
-            }
-            return protein.join(' → ');
-        }
-
-        // ===== BUILD CODON TABLE =====
+        // ===== CODON TABLE =====
         function buildCodonTable() {
             const table = document.getElementById('codonTable');
-            const firstBases = ['U', 'C', 'A', 'G'];
-            const secondBases = ['U', 'C', 'A', 'G'];
-            const thirdBases = ['U', 'C', 'A', 'G'];
-
-            firstBases.forEach(fb => {
-                secondBases.forEach(sb => {
-                    thirdBases.forEach(tb => {
+            ['U','C','A','G'].forEach(fb => {
+                ['U','C','A','G'].forEach(sb => {
+                    ['U','C','A','G'].forEach(tb => {
                         const codon = fb + sb + tb;
                         const aa = geneticCode[codon];
                         const color = aaColors[aa];
                         const cell = document.createElement('div');
                         cell.className = 'codon-cell';
                         cell.dataset.codon = codon;
-                        cell.style.background = color + '30';
+                        cell.style.setProperty('--cell-color', color + '30');
                         cell.style.borderColor = color + '60';
                         cell.innerHTML = `<div style="font-weight:bold; color:${color}; font-size:0.9em">${codon}</div><div style="font-size:0.75em; color:#aaa">${aa}</div>`;
-                        cell.onclick = () => { jumpToCodon(codon); };
+                        cell.onclick = () => jumpToCodon(codon);
                         table.appendChild(cell);
                     });
                 });
             });
         }
 
-        // ===== KEYBOARD SUPPORT =====
-        document.getElementById('codonInput').addEventListener('keypress', (e) => { if(e.key==='Enter') decodeCodon(); });
-        document.getElementById('mrnaInput').addEventListener('keypress', (e) => { if(e.key==='Enter') translateMRNA(); });
+        // ===== KEYBOARD =====
+        document.getElementById('codonInput').addEventListener('keypress', e => { if (e.key === 'Enter') decodeCodon(); });
+        // BUG FIX 5: Use 'keydown' for mrnaInput Enter so it fires after the input
+        // sanitizer (which runs on 'input') has already cleaned the value.
+        document.getElementById('mrnaInput').addEventListener('keydown', e => { if (e.key === 'Enter') translateMRNA(); });
 
-        // ===== mRNA LIVE INPUT SANITISER =====
-        // Silently removes any character that is not A, U, G, C the moment it is typed.
-        // T is specifically blocked — thymine does not exist in mRNA.
+        // ===== mRNA INPUT SANITIZER =====
         (function() {
             const mrnaInput = document.getElementById('mrnaInput');
             let _lastFlash = null;
-
             mrnaInput.addEventListener('input', function() {
                 const el = this;
                 const pos = el.selectionStart;
                 const original = el.value;
-                // Allow only A, U, G, C (case-insensitive — will be uppercased)
-                const cleaned = original.toUpperCase().replace(/[^AUGC]/g, '');
-
-                if (cleaned !== original.toUpperCase()) {
-                    // Something was stripped — flash border red briefly
+                const upper = original.toUpperCase();
+                const tConverted = upper.replace(/T/g, 'U');
+                const hadT = tConverted !== upper;
+                const cleaned = tConverted.replace(/[^AUGC]/g, '');
+                const hadOtherInvalid = cleaned !== tConverted;
+                if (el.value !== cleaned) {
                     el.value = cleaned;
-                    // Restore caret position, accounting for removed characters
                     const removed = original.length - cleaned.length;
                     el.setSelectionRange(Math.max(0, pos - removed), Math.max(0, pos - removed));
-
-                    clearTimeout(_lastFlash);
-                    el.style.borderColor = '#ff4757';
-                    el.style.boxShadow = '0 0 0 3px rgba(255,71,87,0.25)';
-                    _lastFlash = setTimeout(() => {
-                        el.style.borderColor = '';
-                        el.style.boxShadow = '';
-                    }, 600);
-                } else {
-                    // Valid input — just ensure uppercase
-                    if (el.value !== cleaned) {
-                        el.value = cleaned;
-                        el.setSelectionRange(pos, pos);
-                    }
                 }
-            });
-
-            // Also block T on keydown for instant feedback before the character appears
-            mrnaInput.addEventListener('keydown', function(e) {
-                if (e.key.toUpperCase() === 'T' && !e.ctrlKey && !e.metaKey) {
-                    e.preventDefault();
+                if (hadT || hadOtherInvalid) {
                     clearTimeout(_lastFlash);
-                    this.style.borderColor = '#ff4757';
-                    this.style.boxShadow = '0 0 0 3px rgba(255,71,87,0.25)';
-                    _lastFlash = setTimeout(() => {
-                        this.style.borderColor = '';
-                        this.style.boxShadow = '';
-                    }, 600);
+                    el.style.borderColor = hadOtherInvalid ? '#ff4757' : '#00d4ff';
+                    el.style.boxShadow   = hadOtherInvalid ? '0 0 0 3px rgba(255,71,87,0.25)' : '0 0 0 3px rgba(0,212,255,0.25)';
+                    _lastFlash = setTimeout(() => { el.style.borderColor = ''; el.style.boxShadow = ''; }, 600);
                 }
             });
         })();
-        // Mutation simulator no longer has a text input - it's linked to translator
 
-        // ===== INITIALIZE =====
+        // ===== THEME =====
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            localStorage.setItem('theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
+        }
+        if (localStorage.getItem('theme') === 'light') document.body.classList.add('light-mode');
+
+        // ===== PARTICLES =====
+        function createParticles() {
+            const container = document.getElementById('particlesBg');
+            const chars = ['A','U','G','C','✦','•'];
+            for (let i = 0; i < 15; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.textContent = chars[Math.floor(Math.random() * chars.length)];
+                p.style.left = Math.random() * 100 + '%';
+                p.style.animationDelay = Math.random() * 20 + 's';
+                p.style.animationDuration = (15 + Math.random() * 15) + 's';
+                p.style.fontSize = (10 + Math.random() * 20) + 'px';
+                container.appendChild(p);
+            }
+        }
+        createParticles();
+
+        // ===== INIT =====
         buildRing2();
         buildRing3();
         buildCodonTable();
