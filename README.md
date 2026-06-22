@@ -97,7 +97,6 @@ After using Rotagene Kodex, students can:
 - Molecular Biology — Genetic Code chapter
 - Interactive Smart Panel Teaching
 - NCERT curriculum alignment
-- Astrobiology & Origin of Life context
 
 ---
 
