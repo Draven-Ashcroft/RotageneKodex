@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/repo-banner.svg" alt="RotageneKodex Banner" width="100%">
+  <img src="assets/repo-banner.png" alt="RotageneKodex Banner" width="100%">
 </p>
 
 # 🧬 RotageneKodex
