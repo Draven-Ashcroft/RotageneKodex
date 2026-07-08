@@ -1,71 +1,42 @@
 <p align="center">
-  <img src="assets/repo-banner.png" alt="Rotagene Kodex Banner" width="100%">
+  <img src="assets/repo-banner.svg" alt="RotageneKodex Banner" width="100%">
 </p>
 
-# 🧬 ROTAGENE KODEX
-
-<p align="center">
-
+# 🧬 RotageneKodex
 ### Interactive Codon Dialer & Genetic Code Laboratory
 
-Explore the genetic code through an interactive codon dialer, real-time translation, mutation simulation, and the complete 64-codon table.
-
-</p>
+**RotageneKodex** is an open-source educational engine for visualizing the Genetic Code. It simplifies complex molecular biology concepts like codon decoding and protein synthesis through an interactive, browser-based interface.
 
 ---
 
-## 📖 Overview
+## 🚀 Core Functionality
 
-**ROTAGENE KODEX** is an open-source educational visualization of the **Genetic Code**, designed to simplify codon decoding and protein synthesis through interactive molecular biology tools. It combines a three-ring codon dialer, mutation analysis, and real-time translation into a browser-based learning experience.
-
----
-
-## ✨ Features
-
-- 🧬 Interactive 3-ring codon dialer
-- 🔬 Real-time codon decoding
-- 🧪 mRNA to protein translation
-- 🧬 Mutation simulator
-- 📖 Interactive 64-codon reference table
-- ▶️ START & STOP codon navigation
-- 📱 Responsive, browser-based interface
+* **3-Ring Codon Dialer:** Precision interaction to map codons to their corresponding amino acids.
+* **Real-time Translation:** Instant conversion of mRNA sequences into functional protein data.
+* **Mutation Simulator:** Interactive exploration of Silent, Missense, and Nonsense mutations.
+* **Codon Reference:** High-density, interactive table for all 64 codons and 20 amino acids.
 
 ---
 
-## 📜 License
+## 🎓 Academic Alignment
+
+Designed for secondary and higher education (Biology/Genetics curriculum). Ideal for demonstrating the mechanics of translation and the triplet code through hands-on experimentation.
+
+---
+
+## 📄 License
 
 GNU General Public License v3.0 (GPL-3.0)
 
 ---
 
-## 👨‍🏫 Author
+## 👨‍🔬 Author
 
-**Draven-Ashcroft**
-
-**DIPS Chain of Institutions, Tanda**
-
----
-
-## 🙏 Acknowledgements
-
-Developed with assistance from modern AI tools.
-
-Special thanks to:
-
-- **OpenAI (ChatGPT)** — scientific review, debugging, and implementation
-- **Anthropic Claude** — implementation assistance and optimization
-- **Google Gemini** — concept exploration and refinement
-- **Moonshot AI** — debugging and prototype refinement
-- **DeepSeek** — early drafts and experimentation
-
-Inspired by **NCERT Biology**, **BioRender**, and modern scientific visualization principles.
+**Draven Ashcroft**  
+*M.Sc. Agricultural Entomology | ASRB–NET Qualified*
 
 ---
 
 <p align="center">
-
-## 🧬 ROTAGENE KODEX
-
-### *Decoding the Language of Life.*
-
+  <i>"The language of life, decoded."</i>
 </p>
